@@ -5,6 +5,8 @@ const crypto = require("crypto");
 const { Pool } = require("pg")
 require('dotenv').config();
 const cors = require("cors");
+const QRCode = require('qrcode');
+const PDFDoc = require('pdfkit');
 
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -16,9 +18,9 @@ const pool = new Pool({
 })
 
 app.use(cors({
-    origin: "http://localhost:5174", // El puerto exacto donde corre tu React
+    origin: "http://localhost:5173", // El puerto exacto donde corre tu React
     methods: ["GET", "POST"],        // Los métodos que vas a permitir
-    credentials: true                // Por si en el futuro usas cookies/sesiones
+    credentials: true
 }));
 
 async function saveUrl(code, url) {
@@ -80,6 +82,23 @@ async function incrementClicks(code) {
     }
 }
 
+async function getNumClicks(code) {
+    const queryText = `
+        SELECT num_clicks FROM urlmap
+        WHERE code = $1;
+    `;
+    try {
+        const result = await pool.query(queryText, [code]);
+        if(result.rows[0].length === 0) {
+            return null;
+        }
+        return result.rows[0].num_clicks;
+    } catch (err) {
+        console.log("Error while obtaining metrics from code:", code);
+        throw err;
+    }
+}
+
 async function initDB() {
     try {
         await pool.connect();
@@ -90,11 +109,11 @@ async function initDB() {
                 originalurl TEXT NOT NULL,
                 num_clicks INTEGER DEFAULT 0
             );
-        `)
+        `);
         console.log("urlmap Table created/verified");
     } catch(err) {
-        console.error("Error initializing database: ", err.message);
-        process.exit(1)
+        console.error("Error initializing database:", err.message);
+        process.exit(1);
     }
 }
 
@@ -124,9 +143,9 @@ app.post("/api/url", async (req, res) => {
 
 app.get("/:code", async (req, res) => {
     try {
-        const {code} = req.params
+        const {code} = req.params;
         console.log("Codigo pasado a getUrl():", code);
-        const originalUrl = await getUrl(code)
+        const originalUrl = await getUrl(code);
 
         if (!originalUrl) {
             return res.status(404).send("URL no encontrada");
@@ -134,6 +153,41 @@ app.get("/:code", async (req, res) => {
         await incrementClicks(code);
         res.redirect(originalUrl);
     } catch(err) {
+        console.error(err.message);
+    }
+});
+
+app.post("/:code/qr", async (req, res) => {
+    try {
+        const { code } = req.params;
+        const shortLink = `http://localhost:3000/${code}`;
+        const qr = await QRCode.toBuffer(shortLink, {type: 'png', width: 300});
+        res.setHeader('Content-Disposition', 'attachment; filename="your_short_link.pdf"');
+        res.setHeader('Content-Type', 'application/pdf');
+
+        const doc = new PDFDoc();
+        doc.pipe(res);
+        doc.moveDown();
+        doc.image(qr, {
+            fit: [450, 450],
+            align: 'center',
+            valign: 'center'
+        });
+        doc.end();
+    } catch (err) {
+        console.log("Error during QR generation:", err);
+        res.status(500).send("Error generating PDF, please try again later");
+    }
+});
+
+app.get("/:code/metrics", async (req, res) => {
+    try {
+        const { code } = req.params;
+        const num_clicks = await getNumClicks(code);
+        return res.json({
+            num_clicks,
+        });
+    } catch (err) {
         console.error(err.message);
     }
 });
