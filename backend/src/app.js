@@ -1,12 +1,14 @@
-const express = require("express");
-const {request} = require("express");
-const app = express();
-const crypto = require("crypto");
-const { Pool } = require("pg")
-require('dotenv').config();
-const cors = require("cors");
-const QRCode = require('qrcode');
-const PDFDoc = require('pdfkit');
+import express from 'express'
+import crypto from 'crypto'
+import { Pool } from 'pg'
+import dotenv from 'dotenv'
+import cors from 'cors'
+import QRCode from 'qrcode'
+import PDFDoc from 'pdfkit'
+import 'dotenv/config'
+import bcrypt from 'bcrypt'
+import {z} from 'zod'
+import jwt from 'jsonwebtoken'
 
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -16,6 +18,8 @@ const pool = new Pool({
     database: process.env.DB_NAME,
     ssl: false
 })
+
+const app = express()
 
 app.use(cors({
     origin: "http://localhost:5173", // El puerto exacto donde corre tu React
@@ -99,6 +103,39 @@ async function getNumClicks(code) {
     }
 }
 
+async function registerUser(username, email, passwd_hash) {
+    try {
+        const queryString = `
+            INSERT INTO users (username, email, password)
+            VALUES($1, $2, $3);
+        `;
+        await pool.query(queryString, [username, email, passwd_hash]);
+    } catch (err) {
+        console.log("Error saving credentials in database:", err.message);
+        throw err;
+    }
+}
+
+async function validateCredentials(email, passwd){
+    try {
+        const queryString = `
+            SELECT id, email, password FROM users
+            WHERE email = $1;
+        `;
+        const result = await pool.query(queryString, [email]);
+        if(result.rows.length === 0) {
+            return null;
+        }
+        if(await bcrypt.compare(passwd, result.rows[0].password)) {
+            return result.rows[0];
+        }
+        return null;
+    } catch (err) {
+        console.log("Error trying to validate credentials", err.message);
+        throw err;
+    }
+}
+
 async function initDB() {
     try {
         await pool.connect();
@@ -109,8 +146,19 @@ async function initDB() {
                 originalurl TEXT NOT NULL,
                 num_clicks INTEGER DEFAULT 0
             );
+            CREATE TABLE IF NOT EXISTS users (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+                username VARCHAR(50) NOT NULL,
+                password VARCHAR(100) NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS user_links (
+                user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+                code VARCHAR(6) REFERENCES urlmap(code) ON DELETE CASCADE,
+                PRIMARY KEY (user_id, code)
+            );
         `);
-        console.log("urlmap Table created/verified");
+        console.log("urlmap, users and user_links Tables created/verified");
     } catch(err) {
         console.error("Error initializing database:", err.message);
         process.exit(1);
@@ -121,7 +169,7 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
     res.send("URL Shortener API is working fine!")
-})
+});
 
 app.post("/api/url", async (req, res) => {
     const originalUrl = req.body.url
@@ -192,6 +240,50 @@ app.get("/:code/metrics", async (req, res) => {
     }
 });
 
+app.post("/login", async (req, res) => {
+    try {
+        const { email, passwd } = req.body;
+        const result = loginSchema.safeParse({email});
+        if(result.error){
+            return res.status(400).send(`Bad formatting on your credentials, ${result.error.issues}`)
+        }
+        const user = await validateCredentials(email, passwd);
+        if(user) {
+            const token = jwt.sign({id: user.id, email: user.email}, process.env.JWT_SECRET, { expiresIn: '7d'})
+            return res.status(200).json({token})
+        } else {
+            return res.status(401).send("Bad Credentials").j
+        }
+    } catch (err) {
+        return res.status(500).send("Internal Server Error")
+    }
+});
+
+const signupSchema = z.object({
+    username: z.string(),
+    email: z.string().email(),
+    passwd: z.string()
+})
+
+const loginSchema = z.object({
+    email:z.string().email()
+})
+
+app.post("/signup", async (req, res) => {
+    try {
+        const { username, email, passwd } = req.body;
+        const result = signupSchema.safeParse({username, email, passwd});
+        if(result.error) {
+            return res.status(400).send(`Bad formatting on your credentials, ${result.error.issues}`);
+        }
+        const passwd_hashed = await bcrypt.hash(passwd, 11);
+        await registerUser(username, email, passwd_hashed);
+        return res.status(200).send("You are now signed up, welcome to URL Shortener!")
+    } catch (err) {
+        console.log("Error in /signup:", err)
+        return res.status(500).send("Internal Server Error");
+    }
+});
 
 function generateCode(){
     try {
