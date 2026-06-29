@@ -41,13 +41,24 @@ url-shortener/
 │   ├── node_modules/
 │   ├── .env.example
 │   ├── package.json
+│   ├── routes/
+│   │   ├── auth.js
+│   │   └── url.js
+│   ├── controllers/
+│   │   ├── auth.js
+│   │   └── url.js
+│   ├── db.js
 │   └── app.js
 ├── frontend/         # React application (Vite + Tailwind v4)
 │   ├── node_modules/
 │   ├── src/
 │   │   ├── App.jsx
+│   │   ├── Home.jsx
 │   │   ├── components/
 │   │   │   ├── UrlForm.jsx
+│   │   │   ├── Signup.jsx
+│   │   │   └── Login.jsx
+│   │   ├── App.css
 │   │   └── index.css
 │   ├── package.json
 │   └── vite.config.js
