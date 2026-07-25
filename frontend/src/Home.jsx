@@ -1,6 +1,6 @@
 import UrlForm from "./components/UrlForm.jsx";
 import './index.css'
-import { LogIn, LogOut } from 'lucide-react'
+import { LogIn, LogOut, LayoutDashboard } from 'lucide-react'
 
 export default function Home({ token, onLogout, onShortenUrl, onGenerateQr, shortUrl, error, loading }) {
     return (
@@ -11,12 +11,20 @@ export default function Home({ token, onLogout, onShortenUrl, onGenerateQr, shor
                     <span className="text-indigo-400">URL</span> Shortener
                 </h2>
                 {token ? (
-                    <button
-                        onClick={onLogout}
-                        className="text-sm text-gray-400 hover:text-white transition"
-                    >
-                        <LogOut size={20} />
-                    </button>
+                    <>
+                        <a
+                            href='/dashboard'
+                            className="text-sm text-gray-400 hover:text-white transition"
+                        >
+                            <LayoutDashboard size={20} />
+                        </a>
+                        <button
+                            onClick={onLogout}
+                            className="text-sm text-gray-400 hover:text-white transition"
+                        >
+                            <LogOut size={20} />
+                        </button>
+                    </>
                 ) : (
                     <a href="/login" className="text-sm text-indigo-400 hover:underline">
                         <LogIn size={20} />

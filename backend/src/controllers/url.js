@@ -1,22 +1,38 @@
-import pool from '../db.js'
+import {pool} from '../db.js'
 import crypto from "crypto";
 
-export async function saveUrl(code, url) {
+export async function saveUrl(code, url, userId = null) {
+    const client = await pool.connect();
     try {
-        const queryText = `
+        await client.query('BEGIN');
+
+        const queryUrlMap = `
             INSERT INTO urlmap 
             VALUES($1, $2, 0);                       
         `;
 
-        const values = [code, url];
+        await client.query(queryUrlMap, [code, url]);
 
-        await pool.query(queryText, values);
+        if(userId) {
+            const queryUserLinks = `
+                INSERT INTO user_links (user_id, code)
+                VALUES ($1, $2);
+            `
+            await client.query(queryUserLinks, [userId, code]);
+        }
+
+        await client.query('COMMIT')
 
     } catch (err) {
-        console.error("Error while saving an URL in database: ", err.message);
-        process.exit(1);
+        await client.query('ROLLBACK');
+        console.error('Error while saving URL in database:', err.message);
+        throw err;
+    } finally {
+        client.release();
     }
 }
+
+
 
 export async function getUrl(code) {
     try {
@@ -73,6 +89,26 @@ export async function getNumClicks(code) {
         return result.rows[0].num_clicks;
     } catch (err) {
         console.log("Error while obtaining metrics from code:", code);
+        throw err;
+    }
+}
+
+export async function getUserUrls(id) {
+    const queryText = `
+        SELECT ul.code, um.num_clicks AS clicks
+        FROM user_links ul
+        JOIN urlmap um ON ul.code = um.code
+        WHERE ul.user_id = $1;
+    `;
+
+    try {
+        const result = await pool.query(queryText, [id]);
+        if(result.rows.length === 0) {
+            return [];
+        }
+        return result.rows;
+    } catch (err) {
+        console.log('Error while obtaining urls from user:', id);
         throw err;
     }
 }

@@ -24,6 +24,11 @@ export default function Login({onLogin}) {
                 throw new Error(msg)
             }
 
+            if(response.status === 429) {
+                const msg = await response.text()
+                throw new Error(msg)
+            }
+
             const data = await response.json()
             onLogin(data.token)
         } catch(err) {

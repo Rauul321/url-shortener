@@ -3,6 +3,7 @@ import {z} from "zod";
 import bcrypt from "bcrypt";
 import { Router } from 'express';
 import {registerUser, validateCredentials} from "../controllers/auth.js";
+import {loginRateLimit} from "../middlewares/rate-limiter.js";
 
 const router = new Router();
 
@@ -16,7 +17,9 @@ const loginSchema = z.object({
     email:z.string().email()
 })
 
-router.post("/login", async (req, res) => {
+const rateLimitMiddleware = (req, res, next) => loginRateLimit(req, res, next);
+
+router.post("/login", loginRateLimit, async (req, res) => {
     try {
         const { email, passwd } = req.body;
         const result = loginSchema.safeParse({email});
@@ -25,10 +28,11 @@ router.post("/login", async (req, res) => {
         }
         const user = await validateCredentials(email, passwd);
         if(user) {
-            const token = jwt.sign({id: user.id, email: user.email}, process.env.JWT_SECRET, { expiresIn: '7d'})
+            console.log("Objeto user recuperado:", user);
+            const token = jwt.sign({id: user.id, username: user.username, email: user.email}, process.env.JWT_SECRET, { expiresIn: '7d'})
             return res.status(200).json({token})
         } else {
-            return res.status(401).send("Bad Credentials").j
+            return res.status(401).send("Bad Credentials")
         }
     } catch (err) {
         return res.status(500).send("Internal Server Error")

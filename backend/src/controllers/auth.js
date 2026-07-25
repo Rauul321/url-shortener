@@ -17,7 +17,7 @@ export async function registerUser(username, email, passwd_hash) {
 export async function validateCredentials(email, passwd){
     try {
         const queryString = `
-            SELECT id, email, password FROM users
+            SELECT id, username, email, password FROM users
             WHERE email = $1;
         `;
         const result = await pool.query(queryString, [email]);

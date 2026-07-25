@@ -1,20 +1,35 @@
 import QRCode from "qrcode";
 import PDFDoc from "pdfkit";
 import { Router } from 'express'
-import {getNumClicks, incrementClicks, saveUrl} from "../controllers/url.js";
+import {getNumClicks, getUrl, getUserUrls, incrementClicks, saveUrl} from "../controllers/url.js";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
+import {urlLimiter} from "../middlewares/rate-limiter.js";
+import jwt from "jsonwebtoken";
 
 const router = new Router()
 
-router.post("/api/url", async (req, res) => {
+router.post("/api/url", urlLimiter, async (req, res) => {
     const originalUrl = req.body.url
     if(!originalUrl.startsWith("https://") && !originalUrl.startsWith("http://")) {
         console.log("URL is invalid\n")
     }
 
+    let userId = null;
+    const authHeader = req.headers.authorization;
+
+    if(authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            userId = decoded.id;
+        } catch(err) {
+            console.error('Invalid token, URL created as anonymous:', err.message)
+        }
+    }
     const code = generateCode()
 
-    await saveUrl(code, originalUrl);
+    await saveUrl(code, originalUrl, userId);
 
     const shortUrl = `http://localhost:3000/${code}`;
 
@@ -23,6 +38,7 @@ router.post("/api/url", async (req, res) => {
         shortUrl,
     });
 });
+
 
 router.get("/:code", async (req, res) => {
     try {
@@ -74,6 +90,20 @@ router.get("/:code/metrics", async (req, res) => {
         console.error(err.message);
     }
 });
+
+router.get("/:user_id/urls", async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        const urls = await getUserUrls(user_id);
+        return res.json({
+            urls: urls || []
+        })
+    } catch (err) {
+        return res.status(500).json({
+            error: "Internal Server Error"
+        });
+    }
+})
 
 function generateCode(){
     try {
