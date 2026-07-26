@@ -19,7 +19,7 @@ const loginSchema = z.object({
 
 const rateLimitMiddleware = (req, res, next) => loginRateLimit(req, res, next);
 
-router.post("/login", loginRateLimit, async (req, res) => {
+router.post("/login", rateLimitMiddleware, async (req, res) => {
     try {
         const { email, passwd } = req.body;
         const result = loginSchema.safeParse({email});

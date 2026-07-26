@@ -168,8 +168,8 @@ export default function App() {
               loading={loading}
           />
         } />
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route path="/signup" element={<Signup onSignup={handleSignup} />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} onBackHome={() => navigate('/')} /> } />
+        <Route path="/signup" element={<Signup onSignup={handleSignup} onBackHome={() => navigate('/')} />} />
         <Route path="/dashboard" element={
           <ProtectedRoute token={token}>
             <Dashboard username={user?.username} urls={urls} onBackHome={() => navigate('/')} onDeleteUrl={handleDeleteUrl} onDeleteAccount={handleDeleteAccount}/>
