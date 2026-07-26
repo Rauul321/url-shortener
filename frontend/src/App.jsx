@@ -27,7 +27,7 @@ export default function App() {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:3000/${user.id}/urls`)
+      const response = await fetch(`https://url-shortener-pkqf.onrender.com/${user.id}/urls`)
 
       if(!response.ok) {
         throw new Error('URLs cannot be obtained')
@@ -91,7 +91,7 @@ export default function App() {
         ...(token && {'Authorization': `Bearer ${token}`})
       }
 
-      const response= await fetch('http://localhost:3000/api/url', {
+      const response= await fetch('https://url-shortener-pkqf.onrender.com/api/url', {
         method: 'POST',
         headers,
         body: JSON.stringify({ url: longUrl }),
@@ -118,7 +118,7 @@ export default function App() {
 
   const handleGenerateQr = async (code) => {
     try {
-      const response = await fetch(`http://localhost:3000/${code}/qr`, {
+      const response = await fetch(`https://url-shortener-pkqf.onrender.com/${code}/qr`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
@@ -141,7 +141,7 @@ export default function App() {
 
   const handleDeleteUrl = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/url/${id}`, {
+      const response = await fetch(`https://url-shortener-pkqf.onrender.com/api/url/${id}`, {
         method: 'POST',
         headers: {'Content-Type' : 'application/json'}
       })

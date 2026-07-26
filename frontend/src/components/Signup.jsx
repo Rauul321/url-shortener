@@ -15,7 +15,7 @@ export default function Signup({ onSignup, onBackHome }) {
         setError('')
 
         try {
-            const response = await fetch('http://localhost:3000/signup', {
+            const response = await fetch('https://url-shortener-pkqf.onrender.com/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, passwd })
