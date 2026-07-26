@@ -3,7 +3,7 @@ import {pool} from '../db.js'
 
 export async function registerUser(username, email, passwd) {
     try {
-        const saltRounds = 10;
+        const saltRounds = 11;
         const passwd_hash = await bcrypt.hash(passwd, saltRounds);
 
         const queryString = `

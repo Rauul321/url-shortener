@@ -46,8 +46,7 @@ router.post("/signup", async (req, res) => {
         if(result.error) {
             return res.status(400).send(`Bad formatting on your credentials`);
         }
-        const passwd_hashed = await bcrypt.hash(passwd, 11);
-        await registerUser(username, email, passwd_hashed);
+        await registerUser(username, email, passwd);
         return res.status(200).send("You are now signed up, welcome to URL Shortener!")
     } catch (err) {
         console.log("Error in /signup:", err)
