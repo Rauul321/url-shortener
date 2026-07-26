@@ -9,6 +9,7 @@ import Signup from './components/Signup.jsx'
 import Dashboard from "./Dashboard.jsx"
 import {jwtDecode} from 'jwt-decode'
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import {parseErrorMessage} from "./utils/api.js";
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token'))
@@ -30,7 +31,8 @@ export default function App() {
       const response = await fetch(`https://url-shortener-pkqf.onrender.com/${user.id}/urls`)
 
       if(!response.ok) {
-        throw new Error('URLs cannot be obtained')
+        const errorText = await parseErrorMessage(response);
+        throw new Error(errorText);
       }
 
       const data = await response.json()

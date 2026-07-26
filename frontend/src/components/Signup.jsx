@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowLeft, Home, Shield, FileText, Lock, X } from "lucide-react";
 import Footer from "./Footer.jsx";
+import {parseErrorMessage} from "../utils/api.js";
 
 export default function Signup({ onSignup, onBackHome }) {
     const [username, setUsername] = useState('')
@@ -22,8 +23,8 @@ export default function Signup({ onSignup, onBackHome }) {
             })
 
             if (!response.ok) {
-                const msg = await response.text()
-                throw new Error(msg)
+                const errorText = await parseErrorMessage(response);
+                throw new Error(errorText);
             }
 
             onSignup()

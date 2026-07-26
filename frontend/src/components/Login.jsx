@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {ArrowLeft, Home} from "lucide-react";
 import Footer from "./Footer.jsx";
+import {parseErrorMessage} from "../utils/api.js";
 
 
 export default function Login({onLogin, onBackHome}) {
@@ -22,8 +23,8 @@ export default function Login({onLogin, onBackHome}) {
             })
 
             if(!response.ok) {
-                const msg = await response.text()
-                throw new Error(msg)
+                const errorText = await parseErrorMessage(response);
+                throw new Error(errorText);
             }
 
             if(response.status === 429) {
