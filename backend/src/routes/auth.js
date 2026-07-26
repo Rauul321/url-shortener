@@ -44,7 +44,7 @@ router.post("/signup", async (req, res) => {
         const { username, email, passwd } = req.body;
         const result = signupSchema.safeParse({username, email, passwd});
         if(result.error) {
-            return res.status(400).send(`Bad formatting on your credentials, ${result.error.issues}`);
+            return res.status(400).send(`Bad formatting on your credentials`);
         }
         const passwd_hashed = await bcrypt.hash(passwd, 11);
         await registerUser(username, email, passwd_hashed);
