@@ -31,7 +31,7 @@ router.post("/api/url", urlLimiter, async (req, res) => {
 
     await saveUrl(code, originalUrl, userId);
 
-    const shortUrl = `http://localhost:3000/${code}`;
+    const shortUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/${code}`;
 
     return res.json({
         code,
@@ -59,7 +59,7 @@ router.get("/:code", async (req, res) => {
 router.post("/:code/qr", async (req, res) => {
     try {
         const { code } = req.params;
-        const shortLink = `http://localhost:3000/${code}`;
+        const shortLink = `${process.env.BASE_URL || 'http://localhost:3000'}/${code}`;
         const qr = await QRCode.toBuffer(shortLink, {type: 'png', width: 300});
         res.setHeader('Content-Disposition', 'attachment; filename="your_short_link.pdf"');
         res.setHeader('Content-Type', 'application/pdf');

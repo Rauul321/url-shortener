@@ -19,7 +19,7 @@ import urlRouter from './routes/url.js'
 const app = express()
 
 app.use(cors({
-    origin: "http://localhost:5173", // El puerto exacto donde corre tu React
+    origin: "https://rlinks.netlify.app:5173", // El puerto exacto donde corre tu React
     methods: ["GET", "POST"],        // Los métodos que vas a permitir
     credentials: true
 }));
