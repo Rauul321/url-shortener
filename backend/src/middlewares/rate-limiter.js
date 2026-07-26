@@ -1,19 +1,25 @@
-import rateLimit from 'express-rate-limit'
+import rateLimit, {ipKeyGenerator} from 'express-rate-limit'
 
 export const loginRateLimit = rateLimit({
-    windowMs: 10*60*1000,
+    windowMs: 10 * 60 * 1000,
     max: 5,
 
     keyGenerator: (req) => {
         const email = req.body?.email ? req.body.email.toLowerCase().trim() : '';
-        return `login_limit:${req.ip}:${email}`;
+        const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        return `login_limit:${ip}:${email}`;
+    },
+
+    // AQUI: Deshabilitamos el check estricto de IPv6 para custom keyGenerators
+    validate: {
+        keyGeneratorIpFallback: false,
     },
 
     handler: (req, res) => {
-        return res.status(429).send('Too many failed tries. Try again later.')
+        return res.status(429).send('Too many failed tries. Try again later.');
     },
 
-    skipSuccesfulRequests: true,
+    skipSuccessfulRequests: true,
 });
 
 
@@ -30,6 +36,8 @@ export const urlLimiter = rateLimit({
         }
         return `anon:${req.ip}`;
     },
+
+    validate: { xForwardedForHeader: false, default: false },
 
     handler: (req, res) => {
         const isUser = Boolean(req.user);
