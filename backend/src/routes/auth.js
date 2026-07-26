@@ -24,7 +24,7 @@ router.post("/login", rateLimitMiddleware, async (req, res) => {
         const { email, passwd } = req.body;
         const result = loginSchema.safeParse({email});
         if(result.error){
-            return res.status(400).send(`Bad formatting on your credentials, ${result.error.issues}`)
+            return res.status(400).send(`Bad formatting on your credentials`)
         }
         const user = await validateCredentials(email, passwd);
         if(user) {
