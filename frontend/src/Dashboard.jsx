@@ -33,7 +33,7 @@ export default function Dashboard({username, urls, onBackHome, onDeleteUrl, onDe
                             urls.map((item) => (
                                 <UrlCard
                                     key={item.code}
-                                    shortUrl={`https:/rlinks.netlify.app//${item.code}`} // CHAPUZA TEMPORAL
+                                    shortUrl={`https://url-shortener-pkqf.onrender.com/${item.code}`} // CHAPUZA TEMPORAL
                                     clicks={item.clicks || 0} // Si luego agregas los clics
                                     onDelete={() => onDeleteUrl(item.code)}
                                 />
