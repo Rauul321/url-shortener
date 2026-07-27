@@ -3,11 +3,13 @@ import './index.css'
 import { ArrowLeft, User, Trash2, Home } from 'lucide-react';
 import UrlCard from "./components/UrlCard.jsx";
 import {useEffect} from "react";
+import Footer from "./components/Footer.jsx";
 
 export default function Dashboard({username, urls, onBackHome, onDeleteUrl, onDeleteAccount}) {
+    const BACK_URL = import.meta.env.VITE_BACK_URL;
 
     return (
-        <div className="min-h-screen bg-gray-950 flex flex-col items-center px-4 py-12 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gray-950 flex flex-col justify-between items-center px-4 py-12 sm:px-6 lg:px-8">
             <div className="w-full max-w-2xl space-y-8">
                 <div className="flex items-center justify-between border-b border-white/10 pb-6">
                     <button
@@ -33,7 +35,7 @@ export default function Dashboard({username, urls, onBackHome, onDeleteUrl, onDe
                             urls.map((item) => (
                                 <UrlCard
                                     key={item.code}
-                                    shortUrl={`https://url-shortener-pkqf.onrender.com/${item.code}`} // CHAPUZA TEMPORAL
+                                    shortUrl={`${BACK_URL}/${item.code}`} // CHAPUZA TEMPORAL
                                     clicks={item.clicks || 0} // Si luego agregas los clics
                                     onDelete={() => onDeleteUrl(item.code)}
                                 />
@@ -46,15 +48,8 @@ export default function Dashboard({username, urls, onBackHome, onDeleteUrl, onDe
                     </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
-                    <button
-                        onClick={onDeleteAccount}
-                        className="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 transition"
-                    >
-                        <Trash2 size={14} /> Delete Account
-                    </button>
-                </div>
             </div>
+            <Footer />
         </div>
     )
 }

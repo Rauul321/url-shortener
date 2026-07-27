@@ -20,6 +20,8 @@ export default function App() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
+  const BACK_URL = import.meta.env.VITE_BACK_URL || "http://localhost:3000";
+
   const fetchUrls = async () => {
     if(!user?.id) {
       return;
@@ -27,8 +29,16 @@ export default function App() {
     setLoading(true);
     setError(null);
 
+
+
     try {
-      const response = await fetch(`https://url-shortener-pkqf.onrender.com/${user.id}/urls`)
+      const response = await fetch(`${BACK_URL}/urls`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
       if(!response.ok) {
         const errorText = await parseErrorMessage(response);
@@ -93,7 +103,7 @@ export default function App() {
         ...(token && {'Authorization': `Bearer ${token}`})
       }
 
-      const response= await fetch('https://url-shortener-pkqf.onrender.com/api/url', {
+      const response= await fetch(`${BACK_URL}/api/url`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ url: longUrl }),
@@ -120,7 +130,7 @@ export default function App() {
 
   const handleGenerateQr = async (code) => {
     try {
-      const response = await fetch(`https://url-shortener-pkqf.onrender.com/${code}/qr`, {
+      const response = await fetch(`${BACK_URL}/${code}/qr`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
@@ -143,14 +153,19 @@ export default function App() {
 
   const handleDeleteUrl = async (id) => {
     try {
-      const response = await fetch(`https://url-shortener-pkqf.onrender.com/api/url/${id}`, {
-        method: 'POST',
-        headers: {'Content-Type' : 'application/json'}
+      const response = await fetch(`${BACK_URL}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization' : `Bearer ${token}`,
+          'Content-Type' : 'application/json'
+        }
       })
 
       if(!response.ok) {
         throw new Error("Error while trying to delete the URL")
       }
+
+      fetchUrls()
     } catch(err) {
       setError(err.message || 'Error while trying to delete URL')
     }

@@ -1,11 +1,12 @@
 import QRCode from "qrcode";
 import PDFDoc from "pdfkit";
 import { Router } from 'express'
-import {getNumClicks, getUrl, getUserUrls, incrementClicks, saveUrl} from "../controllers/url.js";
+import {deleteUrl, getNumClicks, getUrl, getUserUrls, incrementClicks, saveUrl} from "../controllers/url.js";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import {urlLimiter} from "../middlewares/rate-limiter.js";
 import jwt from "jsonwebtoken";
+import {authenticateToken} from "../middlewares/auth-middleware.js";
 
 const router = new Router()
 
@@ -39,11 +40,35 @@ router.post("/api/url", urlLimiter, async (req, res) => {
     });
 });
 
+router.get("/urls", authenticateToken, async (req, res) => {
+    try {
+        // Obtenemos el ID soportando tanto req.user.id como req.user.user_id
+        const user_id = req.user?.id || req.user?.user_id;
+
+        if (!user_id) {
+            return res.status(400).json({
+                error: "El token de autenticación no contiene un ID de usuario válido."
+            });
+        }
+
+        const urls = await getUserUrls(user_id);
+
+        return res.status(200).json({
+            urls: urls || []
+        });
+
+    } catch (err) {
+        console.error("Error en GET /urls:", err);
+        return res.status(500).json({
+            error: "Internal Server Error"
+        });
+    }
+});
+
 
 router.get("/:code", async (req, res) => {
     try {
         const {code} = req.params;
-        console.log("Codigo pasado a getUrl():", code);
         const originalUrl = await getUrl(code);
 
         if (!originalUrl) {
@@ -91,16 +116,27 @@ router.get("/:code/metrics", async (req, res) => {
     }
 });
 
-router.get("/:user_id/urls", async (req, res) => {
+
+
+router.delete('/:code', authenticateToken, async (req, res) => {
     try {
-        const { user_id } = req.params;
-        const urls = await getUserUrls(user_id);
-        return res.json({
-            urls: urls || []
-        })
+        const { code } = req.params
+        const result = await deleteUrl(code)
+
+        if (!result) {
+            return res.status(404).json({
+                message: "The specified URL was not found."
+            });
+        }
+
+        return res.status(200).json({
+            message: "URL eliminada correctamente.",
+            deletedCode: result.code
+        });
     } catch (err) {
+        console.error("Error al eliminar la URL:", err);
         return res.status(500).json({
-            error: "Internal Server Error"
+            message: "Error interno del servidor al intentar borrar la URL."
         });
     }
 })

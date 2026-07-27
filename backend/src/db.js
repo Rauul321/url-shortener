@@ -1,13 +1,24 @@
 import { Pool } from "pg";
 
-export const pool = new Pool({
-    // Supabase te da la URI completa con usuario, contraseña y host en una sola variable
-    connectionString: process.env.DATABASE_URL,
-    // Supabase requiere SSL obligatoriamente para conexiones externas
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+export const pool = new Pool(
+    isProduction
+        ? {
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false }
+        }
+        : {
+
+            host: process.env.DB_HOST || 'localhost',
+            port: process.env.DB_PORT || 5432,
+            user: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASSWORD || 'admin123',
+            database: process.env.DB_NAME || 'shortener_db',
+            ssl: false // Sin SSL en local
+        }
+);
 
 export default async function initDB() {
     try {
@@ -34,7 +45,7 @@ export default async function initDB() {
         `);
         console.log("urlmap, users and user_links Tables created/verified");
     } catch(err) {
-        console.error("Error initializing database:", err.message);
+        console.error("Error initializing database", );
         process.exit(1);
     }
 }

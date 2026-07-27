@@ -19,8 +19,8 @@ import urlRouter from './routes/url.js'
 const app = express()
 
 app.use(cors({
-    origin: "https://rlinks.netlify.app", // El puerto exacto donde corre tu React
-    methods: ["GET", "POST"],        // Los métodos que vas a permitir
+    origin: process.env.FRONT_URL, // El puerto exacto donde corre tu React
+    methods: ["GET", "POST", "DELETE"],        // Los métodos que vas a permitir
     credentials: true
 }));
 

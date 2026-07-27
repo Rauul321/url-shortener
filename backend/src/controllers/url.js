@@ -95,7 +95,10 @@ export async function getNumClicks(code) {
 
 export async function getUserUrls(id) {
     const queryText = `
-        SELECT ul.code, um.num_clicks AS clicks
+        SELECT 
+            ul.code, 
+            um.originalurl, 
+            um.num_clicks AS clicks
         FROM user_links ul
         JOIN urlmap um ON ul.code = um.code
         WHERE ul.user_id = $1;
@@ -103,12 +106,33 @@ export async function getUserUrls(id) {
 
     try {
         const result = await pool.query(queryText, [id]);
-        if(result.rows.length === 0) {
-            return [];
-        }
+
+        // No hace falta el if(result.rows.length === 0)
+        // result.rows ya es un array vacío [] si no encuentra coincidencias
         return result.rows;
     } catch (err) {
-        console.log('Error while obtaining urls from user:', id);
+        console.error(`Error al obtener URLs del usuario ${id}:`, err.message);
+        throw err;
+    }
+}
+
+export async function deleteUrl(code) {
+    try {
+        const queryText = `
+            DELETE FROM urlmap
+            WHERE code = $1
+            RETURNING code, originalurl;
+        `;
+
+        const result = await pool.query(queryText, [code]);
+
+        if (result.rowCount === 0) {
+            return null; // La URL no existía
+        }
+
+        return result.rows[0];
+    } catch (err) {
+        console.error("Error al eliminar la URL de la base de datos:", err.message);
         throw err;
     }
 }

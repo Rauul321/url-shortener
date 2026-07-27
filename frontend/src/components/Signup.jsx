@@ -11,12 +11,14 @@ export default function Signup({ onSignup, onBackHome }) {
     const [loading, setLoading] = useState(false)
     const [modalContent, setModalContent] = useState(null)
 
+    const BACK_URL = import.meta.env.VITE_BACK_URL;
+
     const handleSubmit = async () => {
         setLoading(true)
         setError('')
 
         try {
-            const response = await fetch('https://url-shortener-pkqf.onrender.com/signup', {
+            const response = await fetch(`${BACK_URL}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, passwd })

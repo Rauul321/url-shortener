@@ -10,13 +10,15 @@ export default function Login({onLogin, onBackHome}) {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState('')
 
+    const BACK_URL = import.meta.env.VITE_BACK_URL;
+
     const handleSubmit = async () => {
 
         setLoading(true)
         setError('')
 
         try {
-            const response = await fetch("https://url-shortener-pkqf.onrender.com/login", {
+            const response = await fetch(`${BACK_URL}/login`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({email, passwd})
